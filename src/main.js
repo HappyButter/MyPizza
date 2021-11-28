@@ -3,11 +3,13 @@ const currentAmbientTemp = document.getElementById("current-ambient-temp-value")
 const expectedTemp = document.getElementById("expected-temp-value");
 const submitTempBtn = document.getElementById("submit-temp-btn");
 const machineSwitchBtn = document.getElementById("machine-switch-btn");
+const retryConnectionBtn = document.getElementById("retry-connection-btn");
 const inputTemp = document.getElementById("input-temp");
 
 const url = "http://192.168.137.167:4444/temperature";
 
 let isMachineOn = false;
+let intervalFetchData = null;
 
 getMachineExpectedTemp(expectedTemp, url);
 
@@ -18,6 +20,9 @@ async function getMachineExpectedTemp(elem, url) {
 		if (parseInt(response.B_set) === 0) {
 			if (machineSwitchBtn.checked) machineSwitchBtn?.click();
 			isMachineOn = false;
+		} else {
+			if (!machineSwitchBtn.checked) machineSwitchBtn?.click();
+			isMachineOn = true;
 		}
 
 		elem.innerText = response.B_set + " \u2103";
@@ -27,7 +32,20 @@ async function getMachineExpectedTemp(elem, url) {
 }
 
 function startShowingCurrentTemperature(elemB, elemT, url, intervalValue) {
-	setInterval(async () => {
+	if (intervalFetchData) return;
+	let numberOfFailure = 0;
+
+	intervalFetchData = setInterval(async () => {
+		if (numberOfFailure === 5) {
+			clearInterval(intervalFetchData);
+			intervalFetchData = null;
+			alert("went wrong... went very wrong...");
+
+			retryConnectionBtn?.classList.remove("hidden");
+			homeContent?.classList.add("hidden");
+			historicalDataContent?.classList.add("hidden");
+		}
+
 		try {
 			const response = await fetch(url).then((response) => response.json());
 			if (parseInt(response.B_set) === 0 && machineSwitchBtn.checked) {
@@ -36,14 +54,14 @@ function startShowingCurrentTemperature(elemB, elemT, url, intervalValue) {
 			elemB.innerText = response.B + " \u2103";
 			elemT.innerText = response.T + " \u2103";
 		} catch (err) {
-			console.log(err);
+			numberOfFailure++;
 		}
 	}, intervalValue);
 }
 
 async function setExpectedTempValue(elem, url, expectedTemp) {
 	try {
-		const reqBody = JSON.stringify({ B: expectedTemp });
+		const reqBody = JSON.stringify({ B_set: parseInt(expectedTemp) });
 
 		const res = await fetch(url, {
 			method: "POST",
@@ -51,19 +69,26 @@ async function setExpectedTempValue(elem, url, expectedTemp) {
 			body: reqBody,
 		}).then((response) => response.json());
 
+		if (parseInt(res.B_set) !== 0) {
+			if (!machineSwitchBtn.checked) machineSwitchBtn?.click();
+			isMachineOn = true;
+		}
+
 		elem.innerText = res.B_set + " \u2103";
 	} catch (err) {
-		alert(err);
+		console.log(err);
 	}
 }
 
 const turnOffMachine = async (url) => {
 	try {
-		await fetch(url, {
+		const res = await fetch(url, {
 			method: "DELETE",
 		}).then((response) => response.json());
+
+		if (res) isMachineOn = false;
 	} catch (err) {
-		alert(err);
+		console.log(err);
 	}
 };
 
@@ -78,7 +103,8 @@ function isTempValid(temp) {
 
 const handleSubmitBtn = (elem, url, expectedTemp) => {
 	if (isTempValid(expectedTemp)) {
-		!isMachineOn
+		console.log(isMachineOn);
+		isMachineOn
 			? setExpectedTempValue(elem, url, expectedTemp)
 			: (elem.innerText = expectedTemp + " \u2103");
 	} else {
@@ -86,14 +112,18 @@ const handleSubmitBtn = (elem, url, expectedTemp) => {
 	}
 };
 
-const handlePowerBtn = () => {
-	isMachineOn = !machineSwitchBtn?.checked;
-	switchMachine(expectedTemp, url, expectedTemp?.innerText);
-};
-
 // button handling
 submitTempBtn?.addEventListener("click", () => handleSubmitBtn(expectedTemp, url, inputTemp.value));
-machineSwitchBtn?.addEventListener("click", handlePowerBtn);
+machineSwitchBtn?.addEventListener("click", () =>
+	switchMachine(expectedTemp, url, expectedTemp?.innerText)
+);
+
+retryConnectionBtn?.addEventListener("click", () => {
+	startShowingCurrentTemperature(currentHeatBedTemp, currentAmbientTemp, url, 1500);
+	retryConnectionBtn.classList.add("hidden");
+	homeContent?.classList.remove("hidden");
+	historicalDataContent?.classList.add("hidden");
+});
 
 // nav handling
 const homeNavBtn = document.getElementById("home");

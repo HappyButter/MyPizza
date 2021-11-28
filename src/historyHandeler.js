@@ -2,6 +2,8 @@ import Chart from "chart.js/auto";
 
 const getHitoricalDataBtn = document.getElementById("get-historical-data-btn");
 const saveToFileBtn = document.getElementById("save-to-file-btn");
+const dateFrom = document.getElementById("datetime-from");
+const dateTo = document.getElementById("datetime-to");
 
 let ctx = document.getElementById("historical-chart");
 
@@ -10,24 +12,25 @@ let historicalData = null;
 
 const getDataURL = "http://192.168.137.167:4444/history";
 
-const getHistoricalData = async () => {
+const getHistoricalData = async (e) => {
+	e.preventDefault();
 	if (historicalDataChart) historicalDataChart.destroy();
 
 	try {
-		historicalData = await fetch(getDataURL).then((response) => response.json());
+		const queryParams = {};
+		if (dateFrom?.value) queryParams["from"] = dateFrom.value.replace("T", "/");
+		if (dateTo?.value) queryParams["to"] = dateTo.value.replace("T", "/");
 
+		const parsedURL = createURLWithQueryParams(getDataURL, queryParams);
+
+		historicalData = await fetch(parsedURL).then((response) => response.json());
 		if (!historicalData) return;
+
 		saveToFileBtn?.classList.remove("hidden");
 
 		historicalDataChart = new Chart(ctx, {
 			type: "line",
 			data: parseData(historicalData),
-			options: {
-				title: {
-					display: true,
-					text: "Hello World App",
-				},
-			},
 		});
 	} catch (e) {
 		console.log(e);
@@ -37,9 +40,10 @@ const getHistoricalData = async () => {
 function parseData(data) {
 	const parsedData = data.reduce(
 		(previousParsedData, step) => {
+			const stepTime = step.Time.replace("/", " ");
 			return {
 				...previousParsedData,
-				timeStamps: [...previousParsedData.timeStamps, step.Time],
+				timeStamps: [...previousParsedData.timeStamps, stepTime],
 				heatBedTemps: [...previousParsedData.heatBedTemps, step.B],
 				expectedHeatBedTemps: [...previousParsedData.expectedHeatBedTemps, step.B_set],
 				ambientTemps: [...previousParsedData.ambientTemps, step.T],
@@ -70,6 +74,11 @@ function parseData(data) {
 	};
 }
 
+function createURLWithQueryParams(url, params) {
+	if (Object.keys(params).length === 0) return url;
+	return url + "?" + new URLSearchParams(params);
+}
+
 function download(filename, type) {
 	var file = new Blob([JSON.stringify(historicalData)], { type: type });
 	if (window.navigator.msSaveOrOpenBlob)
@@ -77,7 +86,7 @@ function download(filename, type) {
 		window.navigator.msSaveOrOpenBlob(file, filename);
 	else {
 		// Others
-		var a = document.createElement("a"),
+		let a = document.createElement("a"),
 			url = URL.createObjectURL(file);
 		a.href = url;
 		a.download = filename;
@@ -90,6 +99,6 @@ function download(filename, type) {
 	}
 }
 
-getHitoricalDataBtn?.addEventListener("click", getHistoricalData);
+getHitoricalDataBtn?.addEventListener("click", (e) => getHistoricalData(e));
 
 saveToFileBtn?.addEventListener("click", () => download("historicalData.txt", "text/plain"));
