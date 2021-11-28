@@ -5,7 +5,7 @@ const submitTempBtn = document.getElementById("submit-temp-btn");
 const machineSwitchBtn = document.getElementById("machine-switch-btn");
 const inputTemp = document.getElementById("input-temp");
 
-const url = "http://169.254.183.102:4444//temperature";
+const url = "http://192.168.137.167:4444/temperature";
 
 let isMachineOn = false;
 
@@ -91,7 +91,24 @@ const handlePowerBtn = () => {
 	switchMachine(expectedTemp, url, expectedTemp?.innerText);
 };
 
+// button handling
 submitTempBtn?.addEventListener("click", () => handleSubmitBtn(expectedTemp, url, inputTemp.value));
 machineSwitchBtn?.addEventListener("click", handlePowerBtn);
+
+// nav handling
+const homeNavBtn = document.getElementById("home");
+const homeContent = document.getElementById("home-content");
+const historicalDataNavBtn = document.getElementById("historical-data");
+const historicalDataContent = document.getElementById("historical-data-content");
+
+homeNavBtn?.addEventListener("click", () => {
+	homeContent?.classList.remove("hidden");
+	historicalDataContent?.classList.add("hidden");
+});
+
+historicalDataNavBtn?.addEventListener("click", () => {
+	historicalDataContent?.classList.remove("hidden");
+	homeContent?.classList.add("hidden");
+});
 
 startShowingCurrentTemperature(currentHeatBedTemp, currentAmbientTemp, url, 1500);

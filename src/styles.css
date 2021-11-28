@@ -13,6 +13,16 @@ html {
 	color: #27476e;
 }
 
+a {
+	text-decoration: none;
+	color: rgb(231, 231, 231);
+}
+
+.hidden {
+	opacity: 0;
+	display: none;
+}
+
 .middlepane {
 	background-color: #eaf8bf;
 	width: 60vw;
@@ -28,6 +38,48 @@ html {
 	.middlepane {
 		width: 95vw;
 	}
+}
+
+header {
+	position: relative;
+	display: flex;
+	flex: row;
+	justify-content: center;
+	align-items: center;
+}
+
+nav {
+	position: relative;
+	background-color: rgb(56, 56, 56);
+	display: flex;
+	justify-content: center;
+	height: 60px;
+	font-size: 1.2em;
+	margin-top: 10%;
+	width: 100%;
+}
+
+nav ul {
+	margin: 0 auto;
+	list-style-type: none;
+	display: flex;
+	align-items: center;
+}
+
+nav ul li {
+	padding: 13px 50px;
+	/* border: 6px solid transparent; */
+}
+
+nav ul li:hover {
+	/* border: 6px solid rgba(107, 107, 107, 0.493); */
+	background-color: rgba(107, 107, 107, 0.493);
+	border-radius: 10%;
+	transition: ease-in-out 0.5s;
+}
+
+main {
+	justify-content: center;
 }
 
 .temp-container {
@@ -129,20 +181,6 @@ input[type="number"] {
 	width: 6em;
 }
 
-/* 
-#current-temp {
-}
-
-#expected-temp {
-} */
-
-main {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	align-items: center;
-}
-
 .power-switch {
 	background-color: #006992;
 	box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.795);
@@ -155,6 +193,7 @@ main {
 	--height: 150px;
 	position: relative;
 	display: flex;
+	align-self: center;
 	justify-content: center;
 	align-items: center;
 	width: var(--width);
@@ -284,4 +323,19 @@ main {
 	100% {
 		transform: scale(1);
 	}
+}
+
+#home-content {
+	position: relative;
+	display: block;
+	flex: column;
+	justify-content: center;
+	align-items: center;
+	justify-items: center;
+}
+
+#historical-data-content {
+	position: relative;
+	display: block;
+	flex: column;
 }
